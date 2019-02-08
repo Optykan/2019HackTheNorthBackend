@@ -2,13 +2,14 @@
 # Imports
 #----------------------------------------------------------------------------#
 
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, abort
 # from flask.ext.sqlalchemy import SQLAlchemy
 import logging
 from logging import Formatter, FileHandler
 import os
 import sqlite3
 from service.database import initialize_db, User, Skill
+from sqlalchemy.exc import StatementError
 
 #----------------------------------------------------------------------------#
 # App Config.
@@ -30,13 +31,27 @@ app.config.from_object('config')
 
 @app.route('/')
 def home():
-    User.create(User(name='yes'))
     User.fetch();
     return jsonify({
             "one": 2,
             "two": 3
         })
 
+@app.route('/users/<int:user_id>', methods=['GET', 'PUT'])
+def users_by_id(user_id):
+    user, session = User.get(user_id)
+    if user is None:
+        return abort(404)
+    if request.method == 'PUT':
+        print(request.get_json()) 
+        user.merge(request.get_json())
+        try:
+            session.commit()
+        except StatementError as e:
+            print("Value error occurred")
+            return abort(400)
+
+    return jsonify(user.toJson())
 
 # Error handlers.
 
@@ -44,13 +59,19 @@ def home():
 def internal_error(error):
     return jsonify(error), 500
 
-
 @app.errorhandler(404)
 def not_found_error(error):
     return jsonify({
         "message": "not found",
         "status": 404
         }), 404
+
+@app.errorhandler(400)
+def bad_request_error(error):
+    return jsonify({
+        "message": "Bad request",
+        "status": 400
+        }), 400
 
 #----------------------------------------------------------------------------#
 # Launch.
