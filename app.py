@@ -8,8 +8,9 @@ import logging
 from logging import Formatter, FileHandler
 import os
 import sqlite3
-from service.database import initialize_db, User, Skill
+from service.database import initialize_db, delete_db, User, Skill
 from sqlalchemy.exc import StatementError
+from scripts.db_utils import load_database
 
 #----------------------------------------------------------------------------#
 # App Config.
@@ -43,15 +44,30 @@ def users_by_id(user_id):
     if user is None:
         return abort(404)
     if request.method == 'PUT':
-        print(request.get_json()) 
         user.merge(request.get_json())
         try:
             session.commit()
         except StatementError as e:
-            print("Value error occurred")
+            # statements are good unless the data doesn't conform
             return abort(400)
+        except:
+            return abort(500)
 
     return jsonify(user.toJson())
+
+@app.route('/users', methods=['GET', 'POST', 'DELETE'])
+def handle_users():
+    if request.method == 'POST':
+        load_database()
+        return jsonify({
+            "message": "Created successfully"
+        }), 201
+    elif request.method == 'GET':
+        User.fetch()
+        return ('', 204)
+    else:
+        delete_db()
+        return ('', 204)
 
 # Error handlers.
 
