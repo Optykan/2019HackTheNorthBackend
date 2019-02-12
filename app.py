@@ -95,6 +95,7 @@ def bad_request_error(error):
 
 # Default port:
 if __name__ == '__main__':
+    delete_db()
     initialize_db()
     app.run()
 

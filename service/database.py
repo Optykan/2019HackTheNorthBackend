@@ -8,11 +8,27 @@ engine = create_engine('sqlite:///./test.db', echo=False)
 Base = declarative_base()
 Session = sessionmaker(bind=engine)
 
-junction = Table('junction', Base.metadata, 
-	Column('user_id', Integer, ForeignKey('users.id')),
-	Column('skill_id',  Integer, ForeignKey('skills.id')),
-	Column('rating', Integer)
-)
+def update_junction_skills(junctions, user_skills):
+	# what is a hashmap
+	for junction in junctions:
+		for skill in user_skills:
+			if junction.skill_id == skill.id and junction.rating != skill.rating:
+				junction.rating = skill.rating
+
+class Junction(Base):
+	__tablename__ = 'junction'
+	junction_id = Column(Integer, primary_key=True)
+	user_id = Column('user_id', Integer, ForeignKey('users.id'))
+	skill_id = Column('skill_id',  Integer, ForeignKey('skills.id'))
+	user_skill_rating = Column('rating', Integer)
+	user = relationship("User", back_populates="skills")
+	skill = relationship("Skill", back_populates="users")	
+
+	@staticmethod
+	def get_by_user_skill(user, skill, session=None):
+		if session is None:
+			session = Session()
+		return session.query(Junction).filter_by(user_id=user.id, skill_id=skill.id), session
 
 class User(Base):
 	__tablename__ = 'users'
@@ -24,7 +40,7 @@ class User(Base):
 	phone = Column(String(10))
 	latitude = Column(Float)
 	longitude = Column(Float)
-	skills = relationship("Skill", secondary=junction, backref="users")
+	skills = relationship("Junction", back_populates="user")
 	
 	def  __repr__(self):
 		return f'ID: {self.id}, NAME: {self.name}, ...'
@@ -76,7 +92,9 @@ class User(Base):
 				setattr(self, key, attr)
 			elif key == "skills":
 				joinedList = selfDict.get(key) + attr
-				updatedSkills = list(map(lambda skill: Skill.get_or_create(name=skill['name'], session=session), joinedList))
+				updatedSkills = list(map(lambda skill: Skill.get_or_create(user=self, name=skill['name'], session=session), joinedList))
+				junctions = list(map(lambda skill: Junction.get_by_user_skill(self, skill), updatedSkills))
+				updatedJunctions = update_junction_skills(junctions, updatedSkills) 
 				setattr(self, key, updatedSkills)
 		if commit:
 			session.commit()
@@ -85,6 +103,8 @@ class Skill(Base):
 	__tablename__ = 'skills'
 	id = Column(Integer, primary_key=True)
 	name = Column(String(32))
+	users = relationship("Junction", back_populates="skill")
+
 	def  __repr__(self):
 		return f'ID: {self.id}, NAME: {self.name}'
 
@@ -113,10 +133,10 @@ class Skill(Base):
 		return session.query(Skill).filter_by(name=name).first(), session
 
 	@staticmethod
-	def get_or_create(name, session=None):
-		skill, session = Skill.get_by_name(name, session)
-		if skill is None:
-			skill, session = Skill.create(Skill(name=name), session)
+	def get_or_create(user, name, session=None):
+		junction, session = Skill.get_by_name(name, session)
+		if junction is None:
+			junction, session = Skill.create(Skill(name=name), session)
 
 		return skill
 
