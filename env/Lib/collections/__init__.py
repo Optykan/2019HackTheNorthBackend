@@ -521,7 +521,7 @@ class Counter(dict):
     0
 
     >>> d = Counter('simsalabim')       # make another counter
-    >>> c.update(d)                     # add in the second counter
+    >>> c.update_user(d)                     # add in the second counter
     >>> c['a']                          # now there are nine 'a'
     9
 
@@ -563,7 +563,7 @@ class Counter(dict):
         if len(args) > 1:
             raise TypeError('expected at most 1 arguments, got %d' % len(args))
         super(Counter, self).__init__()
-        self.update(*args, **kwds)
+        self.update_user(*args, **kwds)
 
     def __missing__(self, key):
         'The count of elements not in the Counter is zero.'
@@ -620,9 +620,9 @@ class Counter(dict):
         Source can be an iterable, a dictionary, or another Counter instance.
 
         >>> c = Counter('which')
-        >>> c.update('witch')           # add elements from another iterable
+        >>> c.update_user('witch')           # add elements from another iterable
         >>> d = Counter('watch')
-        >>> c.update(d)                 # add elements from another counter
+        >>> c.update_user(d)                 # add elements from another counter
         >>> c['h']                      # four 'h' in which, witch, and watch
         4
 
@@ -648,11 +648,11 @@ class Counter(dict):
                     for elem, count in iterable.items():
                         self[elem] = count + self_get(elem, 0)
                 else:
-                    super(Counter, self).update(iterable) # fast path when counter is empty
+                    super(Counter, self).update_user(iterable) # fast path when counter is empty
             else:
                 _count_elements(self, iterable)
         if kwds:
-            self.update(kwds)
+            self.update_user(kwds)
 
     def subtract(*args, **kwds):
         '''Like dict.update() but subtracts counts instead of replacing them.
@@ -1013,9 +1013,9 @@ class UserDict(_collections_abc.MutableMapping):
             dict = None
         self.data = {}
         if dict is not None:
-            self.update(dict)
+            self.update_user(dict)
         if len(kwargs):
-            self.update(kwargs)
+            self.update_user(kwargs)
     def __len__(self): return len(self.data)
     def __getitem__(self, key):
         if key in self.data:

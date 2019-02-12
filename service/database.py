@@ -15,6 +15,7 @@ def update_junction_skills(junctions, user_skills):
 			if junction.skill_id == skill.id and junction.rating != skill.rating:
 				junction.rating = skill.rating
 
+
 class Junction(Base):
 	__tablename__ = 'junction'
 	junction_id = Column(Integer, primary_key=True)
@@ -28,6 +29,7 @@ class Junction(Base):
 	def get_by_user_skill(user, skill, session=None):
 		if session is None:
 			session = Session()
+
 		return session.query(Junction).filter_by(user_id=user.id, skill_id=skill.id), session
 
 class User(Base):
@@ -42,7 +44,7 @@ class User(Base):
 	longitude = Column(Float)
 	skills = relationship("Junction", back_populates="user")
 	
-	def  __repr__(self):
+	def __repr__(self):
 		return f'ID: {self.id}, NAME: {self.name}, ...'
 	
 	@staticmethod
@@ -55,15 +57,16 @@ class User(Base):
 		else:
 			session.add(user)
 
+	@staticmethod
 	def fetch():
 		session = Session()
 		for instance in session.query(User):
 			print(instance)
 
 	@staticmethod
-	def get(id):
+	def get(user_id):
 		session = Session()
-		return session.query(User).filter_by(id=id).first(), session
+		return session.query(User).filter_by(id=user_id).first(), session
 
 	def toJson(self):
 		return {
@@ -75,10 +78,10 @@ class User(Base):
 			"phone": self.phone,
 			"latitude": self.latitude,
 			"longitude": self.longitude,
-			"skills": list(map(lambda skill: skill.toJson(), self.skills))
+			"skills": list(map(lambda skill: skill.to_json(), self.skills))
 		}
 
-	def merge(self, obj, session = None):
+	def merge(self, obj, session=None):
 		commit = False
 		if session is None:
 			session = Session()
@@ -94,10 +97,11 @@ class User(Base):
 				joinedList = selfDict.get(key) + attr
 				updatedSkills = list(map(lambda skill: Skill.get_or_create(user=self, name=skill['name'], session=session), joinedList))
 				junctions = list(map(lambda skill: Junction.get_by_user_skill(self, skill), updatedSkills))
-				updatedJunctions = update_junction_skills(junctions, updatedSkills) 
+				update_junction_skills(junctions, updatedSkills)
 				setattr(self, key, updatedSkills)
 		if commit:
 			session.commit()
+
 
 class Skill(Base):
 	__tablename__ = 'skills'
@@ -105,7 +109,7 @@ class Skill(Base):
 	name = Column(String(32))
 	users = relationship("Junction", back_populates="skill")
 
-	def  __repr__(self):
+	def __repr__(self):
 		return f'ID: {self.id}, NAME: {self.name}'
 
 	def toJson(self):
@@ -137,8 +141,6 @@ class Skill(Base):
 		junction, session = Skill.get_by_name(name, session)
 		if junction is None:
 			junction, session = Skill.create(Skill(name=name), session)
-
-		return skill
 
 def initialize_db():
 	Base.metadata.create_all(engine)

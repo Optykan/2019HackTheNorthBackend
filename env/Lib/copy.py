@@ -286,7 +286,7 @@ def _reconstruct(x, memo, func, args,
             else:
                 slotstate = None
             if state is not None:
-                y.__dict__.update(state)
+                y.__dict__.update_user(state)
             if slotstate is not None:
                 for key, value in slotstate.items():
                     setattr(y, key, value)

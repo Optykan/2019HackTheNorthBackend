@@ -44,7 +44,7 @@ def getregentry():
 ### Decoding Map
 
 decoding_map = codecs.make_identity_dict(range(256))
-decoding_map.update({
+decoding_map.update_user({
     0x0025: 0x066a,     #  ARABIC PERCENT SIGN
     0x0080: 0x00b0,     #  DEGREE SIGN
     0x0081: 0x00b7,     #  MIDDLE DOT

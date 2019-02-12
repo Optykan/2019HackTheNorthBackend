@@ -44,7 +44,7 @@ def getregentry():
 ### Decoding Map
 
 decoding_map = codecs.make_identity_dict(range(256))
-decoding_map.update({
+decoding_map.update_user({
     0x0080: 0x05d0,     #  HEBREW LETTER ALEF
     0x0081: 0x05d1,     #  HEBREW LETTER BET
     0x0082: 0x05d2,     #  HEBREW LETTER GIMEL

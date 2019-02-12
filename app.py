@@ -8,7 +8,7 @@ import logging
 from logging import Formatter, FileHandler
 import os
 import sqlite3
-from service.database import initialize_db, delete_db, User, Skill
+from models import initialize_db, delete_db, User, Skill
 from sqlalchemy.exc import StatementError
 from scripts.db_utils import load_database
 
@@ -18,7 +18,6 @@ from scripts.db_utils import load_database
 
 app = Flask(__name__)
 app.config.from_object('config')
-#db = SQLAlchemy(app)
 
 # Automatically tear down SQLAlchemy.
 # @app.teardown_request
@@ -32,28 +31,34 @@ app.config.from_object('config')
 
 @app.route('/')
 def home():
-    User.fetch();
+    User.fetch()
     return jsonify({
             "one": 2,
             "two": 3
         })
 
+
 @app.route('/users/<int:user_id>', methods=['GET', 'PUT'])
 def users_by_id(user_id):
-    user, session = User.get(user_id)
+    user, session = User.get_by_id(user_id)
     if user is None:
         return abort(404)
     if request.method == 'PUT':
-        user.merge(request.get_json())
         try:
+            user.update_user(request.get_json(), session)
+            user.validate()
             session.commit()
+        except TypeError:
+            return abort(400)
         except StatementError as e:
             # statements are good unless the data doesn't conform
             return abort(400)
-        except:
+        except Exception as e:
+            print(e)
             return abort(500)
 
-    return jsonify(user.toJson())
+    return jsonify(user.to_json())
+
 
 @app.route('/users', methods=['GET', 'POST', 'DELETE'])
 def handle_users():
@@ -71,9 +76,14 @@ def handle_users():
 
 # Error handlers.
 
+
 @app.errorhandler(500)
 def internal_error(error):
-    return jsonify(error), 500
+    return jsonify({
+        "message": "internal server error",
+        "status": 500
+    }), 500
+
 
 @app.errorhandler(404)
 def not_found_error(error):
@@ -81,6 +91,7 @@ def not_found_error(error):
         "message": "not found",
         "status": 404
         }), 404
+
 
 @app.errorhandler(400)
 def bad_request_error(error):
@@ -97,6 +108,7 @@ def bad_request_error(error):
 if __name__ == '__main__':
     delete_db()
     initialize_db()
+    load_database()
     app.run()
 
 # Or specify port manually:

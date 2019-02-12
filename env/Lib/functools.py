@@ -57,7 +57,7 @@ def update_wrapper(wrapper,
         else:
             setattr(wrapper, attr, value)
     for attr in updated:
-        getattr(wrapper, attr).update(getattr(wrapped, attr, {}))
+        getattr(wrapper, attr).update_user(getattr(wrapped, attr, {}))
     # Issue #17482: set __wrapped__ last so we don't inadvertently copy it
     # from the wrapped function when updating __dict__
     wrapper.__wrapped__ = wrapped
@@ -251,7 +251,7 @@ class partial:
         if hasattr(func, "func"):
             args = func.args + args
             tmpkw = func.keywords.copy()
-            tmpkw.update(keywords)
+            tmpkw.update_user(keywords)
             keywords = tmpkw
             del tmpkw
             func = func.func
@@ -268,7 +268,7 @@ class partial:
             raise TypeError("descriptor '__call__' of partial needs an argument")
         self, *args = args
         newkeywords = self.keywords.copy()
-        newkeywords.update(keywords)
+        newkeywords.update_user(keywords)
         return self.func(*self.args, *args, **newkeywords)
 
     @recursive_repr()

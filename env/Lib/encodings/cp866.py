@@ -44,7 +44,7 @@ def getregentry():
 ### Decoding Map
 
 decoding_map = codecs.make_identity_dict(range(256))
-decoding_map.update({
+decoding_map.update_user({
     0x0080: 0x0410,     #  CYRILLIC CAPITAL LETTER A
     0x0081: 0x0411,     #  CYRILLIC CAPITAL LETTER BE
     0x0082: 0x0412,     #  CYRILLIC CAPITAL LETTER VE

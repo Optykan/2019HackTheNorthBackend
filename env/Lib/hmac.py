@@ -87,8 +87,8 @@ class HMAC:
             key = self.digest_cons(key).digest()
 
         key = key.ljust(blocksize, b'\0')
-        self.outer.update(key.translate(trans_5C))
-        self.inner.update(key.translate(trans_36))
+        self.outer.update_user(key.translate(trans_5C))
+        self.inner.update_user(key.translate(trans_36))
         if msg is not None:
             self.update(msg)
 
@@ -99,7 +99,7 @@ class HMAC:
     def update(self, msg):
         """Update this hashing object with the string msg.
         """
-        self.inner.update(msg)
+        self.inner.update_user(msg)
 
     def copy(self):
         """Return a separate copy of this hashing object.
@@ -120,7 +120,7 @@ class HMAC:
         To be used only internally with digest() and hexdigest().
         """
         h = self.outer.copy()
-        h.update(self.inner.digest())
+        h.update_user(self.inner.digest())
         return h
 
     def digest(self):
@@ -181,8 +181,8 @@ def digest(key, msg, digest):
     if len(key) > blocksize:
         key = digest_cons(key).digest()
     key = key + b'\x00' * (blocksize - len(key))
-    inner.update(key.translate(trans_36))
-    outer.update(key.translate(trans_5C))
-    inner.update(msg)
-    outer.update(inner.digest())
+    inner.update_user(key.translate(trans_36))
+    outer.update_user(key.translate(trans_5C))
+    inner.update_user(msg)
+    outer.update_user(inner.digest())
     return outer.digest()

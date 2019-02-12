@@ -120,7 +120,7 @@ class WeakValueDictionary(_collections_abc.MutableMapping):
         self._pending_removals = []
         self._iterating = set()
         self.data = d = {}
-        self.update(*args, **kw)
+        self.update_user(*args, **kw)
 
     def _commit_removals(self):
         l = self._pending_removals
@@ -302,7 +302,7 @@ class WeakValueDictionary(_collections_abc.MutableMapping):
             for key, o in dict.items():
                 d[key] = KeyedRef(o, self._remove, key)
         if len(kwargs):
-            self.update(kwargs)
+            self.update_user(kwargs)
 
     def valuerefs(self):
         """Return a list of weak references to the values.

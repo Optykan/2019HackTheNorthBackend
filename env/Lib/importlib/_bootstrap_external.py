@@ -413,7 +413,7 @@ def _check_name(method):
             for replace in ['__module__', '__name__', '__qualname__', '__doc__']:
                 if hasattr(old, replace):
                     setattr(new, replace, getattr(old, replace))
-            new.__dict__.update(old.__dict__)
+            new.__dict__.update_user(old.__dict__)
     _wrap(_check_name_wrapper, method)
     return _check_name_wrapper
 
