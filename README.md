@@ -11,19 +11,22 @@ Hey guys, this was one hell of an experience with Python coming from a JavaScrip
 
 The database is automatically completely cleared and restored when the server is started.
 
+# Database Architecture
+
+I'm using SQLAlchemy with a custom Association object called `Junction`. This object represents a many to many user to skill relationship, and stores the user's associated rating on a Junction object.
+
 ## Running
 
+`pip install -r requirements.txt` will get all your requirements, or so I've been told.
 This is a boilerplate flask server, so you can just run the thing with `python app.py`. It runs on port 5000.
 
 ## Responses
 
+All endpoints may return some form of the following responses
+
 #### `200 OK`
 
 A 200 OK response is always accompanied by a response body, defined by whatever endpoint you are trying to reach
-
-#### `201 Created`
-
-A 201 Created response indicates the creation of a resource
 
 #### `400 Bad Request`
 
@@ -93,7 +96,7 @@ This endpoint returns a single User corresponding to the user.
 
 #### `PUT /users`
 
-This endpoint accepts `Content-Type: application/json` and a User object in the body. The body can technically contain anythin, but only well-formed User objects will be accepted. Extraneous fields will be ignored.
+This endpoint accepts `Content-Type: application/json` and a json representation of a User object in the body. The body can technically contain anything, but only well-formed User objects will be accepted. Extraneous fields will be ignored.
 
 It is not supported to update a skill.
 
