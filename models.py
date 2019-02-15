@@ -1,21 +1,19 @@
-from sqlalchemy import Table, Column, Integer, Float, ForeignKey, String, create_engine
+from sqlalchemy import Column, Integer, Float, ForeignKey, String, create_engine
 from sqlalchemy.orm import relationship, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 from utils import AssertType, assert_type
 import numbers
-from string import Template
-from collections import namedtuple
-import json
 
 engine = create_engine('sqlite:///./test.db', echo=False)
 Base = declarative_base()
 Session = sessionmaker(bind=engine)
 
+
 class Junction(Base):
     __tablename__ = 'junction'
     junction_id = Column(Integer, primary_key=True)
     user_id = Column('user_id', Integer, ForeignKey('users.id'))
-    skill_id = Column('skill_id',  Integer, ForeignKey('skills.id'))
+    skill_id = Column('skill_id', Integer, ForeignKey('skills.id'))
     user_skill_rating = Column('rating', Integer)
     user = relationship("User", back_populates="skills")
     skill = relationship("Skill", back_populates="users")
@@ -65,12 +63,12 @@ class User(Base):
     longitude = Column(Float)
     skills = relationship("Junction", back_populates="user")
 
-    def  __repr__(self):
+    def __repr__(self):
         return f'ID: {self.id}, NAME: {self.name}'
 
     def update_user(self, obj, session):
-        #serialize self to json so we can iterate over properties
-        #I'm sure theres a better way but I'm a JS programmer
+        # serialize self to json so we can iterate over properties
+        # I'm sure theres a better way but I'm a JS programmer
         selfDict = self.to_json()
         for key in selfDict:
             attr = obj.get(key, None)
@@ -81,19 +79,21 @@ class User(Base):
                 # regular attributes
                 setattr(self, key, attr)
             elif key == "skills":
-               # to update the skills, we need to:
-               # 1) fetch all the Junctions
-               #existing_junctions = session.query(Junction).filter_by(user_id=self.id)
-               #junction_objs = []
-               #for junction in existing_junctions:
-               #  junction_objs.append(junction)
+                # to update the skills, we need to:
+                # 1) fetch all the Junctions
+                # existing_junctions = session.query(Junction).filter_by(user_id=self.id)
+                # junction_objs = []
+                # for junction in existing_junctions:
+                #  junction_objs.append(junction)
 
-               # 2) Find missing Junctions and create them
-               # 3) update the junctions
-               # 4) save junctions
-               skill_objects = list(map(lambda dict: Skill(name=dict['name'], rating=dict['rating']), attr))
-               db_safe = list(map(lambda skill: Skill.get_or_create(self, skill, session)[1], skill_objects))
-               setattr(self, "skills", db_safe)
+                # 2) Find missing Junctions and create them
+                # 3) update the junctions
+                # 4) save junctions
+
+                # As it currently stands we assume we're just creating a user
+                skill_objects = list(map(lambda dict: Skill(name=dict['name'], rating=dict['rating']), attr))
+                db_safe = list(map(lambda skill: Skill.get_or_create(self, skill, session)[1], skill_objects))
+                setattr(self, "skills", db_safe)
 
     def to_json(self):
         return {
@@ -209,6 +209,7 @@ class Skill(Base):
 
 def initialize_db():
     Base.metadata.create_all(engine)
+
 
 def delete_db():
     Base.metadata.drop_all(engine)
