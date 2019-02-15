@@ -40,8 +40,8 @@ A 400 Bad Request is always accompanied by the following body:
 A 404 Not Found is always accompanied by the following body:
 ```
 {
-    "message": "bad request",
-    "status": 400
+    "message": "not found",
+    "status": 404
 }
 ```
 
