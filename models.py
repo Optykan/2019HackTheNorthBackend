@@ -31,14 +31,27 @@ class Junction(Base):
         user.skills.append(self)
         self.skill = skill
 
+    def represent_as_skill(self):
+        return {
+            "name": self.skill.name,
+            "rating": self.user_skill_rating,
+        }
+
     @staticmethod
     def retrieve(user, skill, session=None):
         if session is None:
             session = Session()
         print("Retrieve junction")
-        for junction in session.query(Junction):
-            print(junction)
         return session.query(Junction).filter_by(user_id=user.id, skill_id=skill.id)
+
+    @staticmethod
+    def retrieve_all():
+        session = Session()
+        ret = []
+        for junction in session.query(Junction):
+            ret.append(junction)
+        return ret
+
 
 class User(Base):
     __tablename__ = 'users'
@@ -53,7 +66,7 @@ class User(Base):
     skills = relationship("Junction", back_populates="user")
 
     def  __repr__(self):
-        return f'ID: {self.id}, NAME: {self.name}, ...'
+        return f'ID: {self.id}, NAME: {self.name}'
 
     def update_user(self, obj, session):
         #serialize self to json so we can iterate over properties
@@ -68,13 +81,19 @@ class User(Base):
                 # regular attributes
                 setattr(self, key, attr)
             elif key == "skills":
-                # to update the skills, we need to:
-                # 1) fetch all the Junctions
-                junctions = session.query(Junction).filter_by(user_id=self.id)
-                # 2) Find missing Junctions and create them
-                # 3) update the junctions
-                # 4) save junctions
-                setattr(self, key, [])
+               # to update the skills, we need to:
+               # 1) fetch all the Junctions
+               #existing_junctions = session.query(Junction).filter_by(user_id=self.id)
+               #junction_objs = []
+               #for junction in existing_junctions:
+               #  junction_objs.append(junction)
+
+               # 2) Find missing Junctions and create them
+               # 3) update the junctions
+               # 4) save junctions
+               skill_objects = list(map(lambda dict: Skill(name=dict['name'], rating=dict['rating']), attr))
+               db_safe = list(map(lambda skill: Skill.get_or_create(self, skill, session)[1], skill_objects))
+               setattr(self, "skills", db_safe)
 
     def to_json(self):
         return {
@@ -86,15 +105,17 @@ class User(Base):
             "phone": self.phone,
             "latitude": self.latitude,
             "longitude": self.longitude,
-            "skills": list(map(lambda skill: skill.to_json(), self.skills))
+            "skills": list(map(lambda junction: junction.represent_as_skill(), self.skills))
         }
 
     @staticmethod
-    def fetch():
+    def retrieve_all():
         session = Session()
-        print("fetching")
+        users = []
         for user in session.query(User):
-            print(user)
+            users.append(user.to_json())
+        session.close()
+        return users
 
     @staticmethod
     def create(user, session=None):
@@ -102,6 +123,7 @@ class User(Base):
             session = Session()
             session.add(user)
             session.commit()
+            session.close()
         else:
             session.add(user)
 
@@ -112,7 +134,6 @@ class User(Base):
         return session.query(User).filter_by(id=user_id).first(), session
 
     def validate(self):
-        print("VALIDATE")
         types = {
             "id": AssertType(int),
             "name": AssertType(str, 50),
@@ -131,6 +152,16 @@ class Skill(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String(50))
     users = relationship("Junction", back_populates="skill")
+    rating = 0
+
+    def __repr__(self):
+        return f'Name: {self.name}'
+
+    def to_json(self):
+        return {
+            "id": self.id,
+            "name": self.name
+        }
 
     @staticmethod
     def get_by_name(skillName, session=None):
@@ -144,19 +175,37 @@ class Skill(Base):
             session = Session()
             session.add(skill)
             session.commit()
+            session.close()
         else:
             session.add(skill)
 
     @staticmethod
-    def get_or_create(user, name, session=None):
-        skill, session = Skill.get_by_name(name, session)
+    def get_or_create(user, input_skill, session=None):
+        skill, session = Skill.get_by_name(input_skill.name, session)
         if skill is None:
-            skill = Skill(name=name)
+            skill = Skill(name=input_skill.name)
             Skill.create(skill, session)
-            junction = Junction(user_skill_rating=5)
-            junction.link(user=user, skill=skill)
-            return skill, session
-        return skill, session
+        junction = Junction(user_skill_rating=input_skill.rating)
+        junction.link(user=user, skill=skill)
+        return skill, junction, session
+
+    @staticmethod
+    def create_if_not_exists(skill, session=None):
+        retr_skill, session = Skill.get_by_name(skill['name'], session)
+        if skill is None:
+            skill = Skill(name=input_skill['name'])
+            Skill.create(skill, session)
+
+    @staticmethod
+    def retrieve_all():
+        session = Session()
+        results = session.query(Skill)
+        ret = []
+        for skill in results:
+            ret.append(skill.to_json())
+        session.close()
+        return ret
+
 
 def initialize_db():
     Base.metadata.create_all(engine)

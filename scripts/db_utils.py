@@ -21,7 +21,7 @@ def create_skills(all_data):
 	for user in all_data:
 		skills = user['skills']
 		for skill in skills:
-			Skill.create(Skill(name=skill['name']), session)
+			Skill.create_if_not_exists(skill, session)
 
 	session.commit()
 	print('Created skills')
