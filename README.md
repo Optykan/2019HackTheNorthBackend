@@ -15,6 +15,12 @@ The database is automatically completely cleared and restored when the server is
 
 I'm using SQLAlchemy with a custom Association object called `Junction`. This object represents a many to many user to skill relationship, and stores the user's associated rating on a Junction object.
 
+# Next Steps
+
+Obviously this is far from perfect, but first things first we should probably finish the requirements. Then after that to ensure consistent development across all platforms, we should containerize the application. This would also be convenient for scaling up to more users with kubernetes stack (or is that too extra?).
+
+We might also want to authenticate each endpoint by way of JWT bearer tokens.
+
 ## Running
 
 `pip install -r requirements.txt` will get all your requirements, or so I've been told.
