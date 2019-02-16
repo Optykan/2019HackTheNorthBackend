@@ -51,9 +51,11 @@ def users_by_id(user_id):
             user.validate()
             session.commit()
         except TypeError:
+            # .validate() throws a TypeError if it fails
             return abort(400)
         except StatementError as e:
             # statements are good unless the data doesn't conform
+            # this will be thrown if validation fails for whatever reason
             return abort(400)
         except Exception as e:
             print(e)
@@ -73,7 +75,7 @@ def handle_users():
             "message": "Created successfully"
         }), 201
     elif request.method == 'GET':
-        return jsonify(User.retrieve_all(), 204)
+        return jsonify(User.retrieve_all())
     else:
         delete_db()
         return ('', 204)
@@ -82,7 +84,7 @@ def handle_users():
 @app.route('/skills')
 def retrieve_skills():
     junctions = list(map(lambda junction: junction.represent_as_skill(), Junction.retrieve_all()))
-
+    
     try:
         min_rating = float(request.args.get('min_rating') or 0)
         max_rating = float(request.args.get('max_rating') or 10)

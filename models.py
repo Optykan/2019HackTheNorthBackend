@@ -8,7 +8,8 @@ engine = create_engine('sqlite:///./test.db', echo=False)
 Base = declarative_base()
 Session = sessionmaker(bind=engine)
 
-
+# The Junction table is an association object between Users and Skills
+# It's a variation of many to many but with extra fields
 class Junction(Base):
     __tablename__ = 'junction'
     junction_id = Column(Integer, primary_key=True)
@@ -25,10 +26,12 @@ class Junction(Base):
 
         return session.query(Junction).filter_by(user_id=user.id, skill_id=skill.id)
 
+    # link a skill to a user through the junction
     def link(self, skill, user):
         user.skills.append(self)
         self.skill = skill
 
+    # return the dictionary representation of this junction
     def represent_as_skill(self):
         return {
             "name": self.skill.name,
@@ -39,7 +42,6 @@ class Junction(Base):
     def retrieve(user, skill, session=None):
         if session is None:
             session = Session()
-        print("Retrieve junction")
         return session.query(Junction).filter_by(user_id=user.id, skill_id=skill.id)
 
     @staticmethod
@@ -50,7 +52,7 @@ class Junction(Base):
             ret.append(junction)
         return ret
 
-
+# A User object
 class User(Base):
     __tablename__ = 'users'
     id = Column(Integer, primary_key=True)
@@ -133,6 +135,7 @@ class User(Base):
             session = Session()
         return session.query(User).filter_by(id=user_id).first(), session
 
+    # Validate the current values on this object
     def validate(self):
         types = {
             "id": AssertType(int),
@@ -207,9 +210,11 @@ class Skill(Base):
         return ret
 
 
+# Create the tables
 def initialize_db():
     Base.metadata.create_all(engine)
 
 
+# Delete the tables
 def delete_db():
     Base.metadata.drop_all(engine)

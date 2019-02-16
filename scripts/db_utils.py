@@ -1,12 +1,14 @@
 import json
 from models import User, Skill, Session
 
+# create a user from a dictionary object
 def create_from_dict(obj, session):
     user = User()
     user.update_user(obj, session)
     return user
 
 
+# create all the users and save them
 def create_users(data):
     session = Session()
     for d in data:
@@ -16,6 +18,7 @@ def create_users(data):
     print('Created Users')
 
 
+# create all the skills, once only
 def create_skills(all_data):
     session = Session()
     for user in all_data:
@@ -27,6 +30,7 @@ def create_skills(all_data):
     print('Created skills')
 
 
+# read the data into the database
 def load_database():
     json_file = open('./scripts/users.json').read()
     raw_data = json.loads(json_file)
